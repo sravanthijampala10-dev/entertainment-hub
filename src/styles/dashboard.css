@@ -1,0 +1,14 @@
+:root{
+  --bg: #0f1724;
+  --muted: #9aa4b2;
+}
+
+.sidebar.collapsed{ transform: translateX(-8px); opacity: 0.95 }
+
+.btn-ghost{ background: transparent; border: 1px solid rgba(255,255,255,0.06); padding: 6px 10px; border-radius: 10px; color: #cbd5e1 }
+
+.muted{ color: var(--muted) }
+
+@media (max-width:768px){
+  .sidebar{ padding: 12px }
+}

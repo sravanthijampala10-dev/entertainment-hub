@@ -1,22 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import Sidebar from './components/Sidebar';
+import Header from './components/Header';
+import SmallBarChart from './components/SmallBarChart';
+import StatCard from './components/StatCard';
 
 const API_BASE = "https://todolist.elevaitelabs.in/api/read_actor_movies.php"; // backend unchanged
-
-function SmallBarChart({ data = [], width = 160, height = 60 }) {
-  const max = Math.max(...data.map(d => d.value), 1);
-  const bw = width / (data.length || 1);
-  return (
-    <svg width={width} height={height} className="block">
-      {data.map((d, i) => {
-        const h = (d.value / max) * (height - 12);
-        return (
-          <rect key={i} x={i * bw + 4} y={height - h - 6} width={bw - 8} height={h} rx={3} fill={d.color || '#f59e0b'} />
-        );
-      })}
-    </svg>
-  );
-}
 
 export default function App() {
   const [records, setRecords] = useState([]);
@@ -124,79 +113,22 @@ export default function App() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-black to-black text-white p-6 md:p-10">
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
 
-        {/* Sidebar */}
-        <aside className={`md:col-span-1 bg-white/5 rounded-2xl p-6 border border-white/10 sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
-          <div className="flex justify-between items-start mb-3">
-            <div>
-              <h3 className="text-lg font-semibold text-amber-300 mb-1">Dashboard</h3>
-              <p className="text-sm text-gray-400">Quick stats and insights — backend unchanged</p>
-            </div>
-            <div className="flex gap-2">
-              <button title="Export CSV" onClick={exportCSV} className="btn-ghost">Export</button>
-              <button title="Toggle" onClick={() => setSidebarCollapsed(s => !s)} className="btn-ghost">{sidebarCollapsed ? '☰' : '✕'}</button>
-            </div>
-          </div>
+        <div className="md:col-span-1">
+          <Sidebar
+            total={total}
+            uniqueActors={uniqueActors}
+            topCount={moviesPerActor.length}
+            topActors={moviesPerActor}
+            recent={recent}
+            onFilter={(f) => { setFilter(f); setPage(1); }}
+            collapsed={sidebarCollapsed}
+            onToggle={() => setSidebarCollapsed(s => !s)}
+          />
+        </div>
 
-          <div className="grid grid-cols-3 gap-3 mb-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold">{total}</div>
-              <div className="text-xs text-gray-400">Records</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">{uniqueActors}</div>
-              <div className="text-xs text-gray-400">Actors</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">{moviesPerActor.length}</div>
-              <div className="text-xs text-gray-400">Top Actors</div>
-            </div>
-          </div>
-
-          <div className="mb-4">
-            <h4 className="text-sm font-medium mb-2">Top actors</h4>
-            <SmallBarChart data={moviesPerActor} />
-            <ul className="mt-3 text-sm text-gray-300 space-y-1">
-              {moviesPerActor.map((m, i) => (
-                <li key={i} className="flex justify-between">
-                  <span>{m.label}</span>
-                  <span className="text-amber-300 font-semibold">{m.value}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="mt-4">
-            <h4 className="text-sm font-medium mb-2">Filters</h4>
-            <div className="flex gap-2">
-              <button onClick={() => setFilter('all')} className={`px-3 py-1 rounded-lg ${filter==='all'?'bg-amber-400 text-black':''}`}>All</button>
-              <button onClick={() => setFilter('actor')} className={`px-3 py-1 rounded-lg ${filter==='actor'?'bg-amber-400 text-black':''}`}>Actor</button>
-              <button onClick={() => setFilter('movie')} className={`px-3 py-1 rounded-lg ${filter==='movie'?'bg-amber-400 text-black':''}`}>Movie</button>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <h4 className="text-sm font-medium mb-2">Recent Activity</h4>
-            <ul className="text-sm text-gray-300 space-y-2">
-              {recent.map((r) => (
-                <li key={r.id} className="flex justify-between items-center">
-                  <div className="truncate">{r.actor_name} — <span className="muted">{r.movie_name}</span></div>
-                  <div className="text-xs muted">{new Date(r.created_at).toLocaleDateString()}</div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </aside>
-
-        {/* Main area */}
         <main className="md:col-span-2 space-y-8">
-          {/* Header */}
-          <div className="text-center mb-2">
-            <span className="inline-block px-4 py-1 mb-4 rounded-full text-sm bg-amber-400/20 text-amber-300">Movie Database SPA</span>
-            <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-amber-400 to-yellow-200 bg-clip-text text-transparent">🎬 Actor & Movie Records</h1>
-            <p className="text-gray-400 mt-1">Professional dashboard — Frontend only changes</p>
-          </div>
+          <Header onSearch={(q) => { setFilter('all'); /* no backend search — quick client filter */ }} exportCSV={exportCSV} />
 
-          {/* Table Card */}
           <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl p-6 border border-white/10">
             <div className="flex items-center justify-between mb-4 gap-4">
                 <div>
@@ -248,7 +180,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Add Record Form */}
           <div className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-2xl p-6 border border-white/10">
             <h2 className="text-2xl font-semibold mb-6 text-amber-300">➕ Add New Record</h2>
 
